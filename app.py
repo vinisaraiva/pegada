@@ -70,61 +70,68 @@ st.write("Descubra sua pegada de carbono e veja como reduzir seu impacto ambient
 # Perguntas ao usuário (passo a passo)
 st.sidebar.header("📋 Questionário")
 perguntas = [
-    "Quantos km você dirige por semana?",
+    "Você usa transporte próprio? (Carro, Moto, Nenhum)",
+    "Se usa transporte próprio, quantos km percorre por semana?",
+    "Você utiliza transporte coletivo? (Sim ou Não)",
+    "Se usa transporte coletivo, quantos dias por semana?",
     "Consumo mensal de energia (kWh)?",
     "Qual sua dieta?",
     "Quantos voos de longa distância por ano?",
     "Quantos produtos industrializados você consome por semana?",
     "Quantas refeições você consome fora de casa por semana?",
     "Você recicla lixo regularmente?",
+    "Você faz compostagem de restos orgânicos?",
     "Quantas compras de roupas novas você faz por ano?"
 ]
 
-# Inicializar session state
+respostas = {}
 if 'pagina' not in st.session_state:
     st.session_state.pagina = 0
-if 'respostas' not in st.session_state:
-    st.session_state.respostas = {}
 
-# Botão para reiniciar o questionário
-if st.sidebar.button("Calcular Novamente"):
-    st.session_state.pagina = 0
-    st.session_state.respostas = {}
-    st.rerun()
-
-# Exibir perguntas uma por vez
 if st.session_state.pagina < len(perguntas):
-    pergunta_atual = perguntas[st.session_state.pagina]
-    
-    if pergunta_atual == "Qual sua dieta?":
-        resposta = st.selectbox(pergunta_atual, ["Vegetariana", "Pouca carne", "Consumo médio de carne", "Muita carne"], index=0)
-    elif pergunta_atual == "Você recicla lixo regularmente?":
-        resposta = st.radio(pergunta_atual, ["Sim", "Não"], index=1)
+    if perguntas[st.session_state.pagina] == "Qual sua dieta?":
+        resposta = st.selectbox(perguntas[st.session_state.pagina], ["Vegetariana", "Pouca carne", "Consumo médio de carne", "Muita carne"])
+    elif perguntas[st.session_state.pagina] == "Você usa transporte próprio? (Carro, Moto, Nenhum)":
+        resposta = st.selectbox(perguntas[st.session_state.pagina], ["Carro", "Moto", "Nenhum"])
+    elif perguntas[st.session_state.pagina] == "Você utiliza transporte coletivo? (Sim ou Não)":
+        resposta = st.selectbox(perguntas[st.session_state.pagina], ["Sim", "Não"])
     else:
-        resposta = st.number_input(pergunta_atual, min_value=0, step=1)
+        resposta = st.number_input(perguntas[st.session_state.pagina], min_value=0, step=1)
     
     if st.button("Próximo"):
-        st.session_state.respostas[pergunta_atual] = resposta
+        respostas[perguntas[st.session_state.pagina]] = resposta
         st.session_state.pagina += 1
-        st.rerun()
+        st.experimental_rerun()
 else:
     # Calcular pegada de carbono
     def calcular_pegada(respostas):
-        fator_carro = 0.21 * respostas.get("Quantos km você dirige por semana?", 0) * 52
-        fator_energia = 0.5 * respostas.get("Consumo mensal de energia (kWh)?", 0) * 12
-        fator_voos = respostas.get("Quantos voos de longa distância por ano?", 0) * 1100
-        fator_produtos = respostas.get("Quantos produtos industrializados você consome por semana?", 0) * 50
-        fator_refeicoes = respostas.get("Quantas refeições você consome fora de casa por semana?", 0) * 75
-        fator_roupas = respostas.get("Quantas compras de roupas novas você faz por ano?", 0) * 100
-        fator_reciclagem = -500 if respostas.get("Você recicla lixo regularmente?", "Não") == "Sim" else 0
+        fator_carro = 0
+        fator_moto = 0
+        fator_onibus = 0
+        
+        if respostas["Você usa transporte próprio? (Carro, Moto, Nenhum)"] == "Carro":
+            fator_carro = 0.18 * respostas["Se usa transporte próprio, quantos km percorre por semana?"] * 52
+        elif respostas["Você usa transporte próprio? (Carro, Moto, Nenhum)"] == "Moto":
+            fator_moto = 0.08 * respostas["Se usa transporte próprio, quantos km percorre por semana?"] * 52
+        
+        if respostas["Você utiliza transporte coletivo? (Sim ou Não)"] == "Sim":
+            fator_onibus = 0.06 * respostas["Se usa transporte coletivo, quantos dias por semana?"] * 52
+        
+        fator_energia = 0.35 * respostas["Consumo mensal de energia (kWh)?"] * 12
+        fator_voos = respostas["Quantos voos de longa distância por ano?"] * 1100
+        fator_produtos = respostas["Quantos produtos industrializados você consome por semana?"] * 50
+        fator_refeicoes = respostas["Quantas refeições você consome fora de casa por semana?"] * 75
+        fator_roupas = respostas["Quantas compras de roupas novas você faz por ano?"] * 100
+        fator_reciclagem = -500 if respostas["Você recicla lixo regularmente?"] > 0 else 0
+        fator_compostagem = -300 if respostas["Você faz compostagem de restos orgânicos?"] > 0 else 0
         
         fator_dieta = {"Vegetariana": 1500, "Pouca carne": 2500, "Consumo médio de carne": 3500, "Muita carne": 4500}
         
-        pegada_total = (fator_carro + fator_energia + fator_voos + fator_produtos +
-                        fator_refeicoes + fator_roupas + fator_reciclagem + fator_dieta[respostas.get("Qual sua dieta?", "Vegetariana")])
+        pegada_total = (fator_carro + fator_moto + fator_onibus + fator_energia + fator_voos + fator_produtos +
+                        fator_refeicoes + fator_roupas + fator_reciclagem + fator_compostagem + fator_dieta[respostas["Qual sua dieta?"]])
         return pegada_total
     
-    pegada = calcular_pegada(st.session_state.respostas)
+    pegada = calcular_pegada(respostas)
     media_global = 4800  # Média global de emissão per capita
     restauracao_por_arvore = 22  # Cada árvore absorve 22kg de CO2/ano
     arvores_necessarias = pegada / restauracao_por_arvore
@@ -149,14 +156,19 @@ else:
     
     # Sugestões para redução
     st.subheader("🌱 Dicas para Reduzir Sua Pegada")
-    if st.session_state.respostas.get("Quantos km você dirige por semana?", 0) > 50:
+    if respostas["Se usa transporte próprio, quantos km percorre por semana?"] > 50:
         st.write("🚴 **Use bicicleta ou transporte público para trajetos curtos.")
-    if st.session_state.respostas.get("Consumo mensal de energia (kWh)?", 0) > 200:
+    if respostas["Consumo mensal de energia (kWh)?"] > 200:
         st.write("💡 **Reduza o consumo de energia com lâmpadas LED e eletrônicos eficientes.")
-    if st.session_state.respostas.get("Qual sua dieta?", "Vegetariana") in ["Consumo médio de carne", "Muita carne"]:
+    if respostas["Qual sua dieta?"] in ["Consumo médio de carne", "Muita carne"]:
         st.write("🥦 **Reduza o consumo de carne e adote mais refeições à base de vegetais.")
-    if st.session_state.respostas.get("Quantos voos de longa distância por ano?", 0) > 2:
+    if respostas["Quantos voos de longa distância por ano?"] > 2:
         st.write("✈️ **Evite voos curtos sempre que possível, priorize transporte terrestre.")
+    if respostas["Você recicla lixo regularmente?"] == 0:
+        st.write("♻️ **Comece a reciclar para reduzir emissões desnecessárias.")
+
+    st.write("🌿 Pequenas mudanças no dia a dia ajudam a preservar o planeta!")
+
     if st.session_state.respostas.get("Você recicla lixo regularmente?", "Não") == "Não":
         st.write("♻️ **Comece a reciclar para reduzir emissões desnecessárias.")
 

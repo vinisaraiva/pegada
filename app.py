@@ -64,7 +64,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 st.title("🌍 Calculadora de Pegada de Carbono")
 st.write("Descubra sua pegada de carbono e veja como reduzir seu impacto ambiental!")
 
@@ -93,12 +92,10 @@ perguntas = [
 ]
 
 def obter_resposta(pergunta):
-    if pergunta == "Você usa transporte próprio?":
+    if pergunta in ["Você usa transporte próprio?", "Você utiliza transporte coletivo?", "Você recicla lixo regularmente?", "Você faz compostagem de restos orgânicos?"]:
         return st.selectbox(pergunta, ["Sim", "Não"])
     elif pergunta == "Se usa transporte próprio, qual tipo? (Carro, Moto)":
         return st.selectbox(pergunta, ["Carro", "Moto"])
-    elif pergunta == "Você utiliza transporte coletivo?":
-        return st.selectbox(pergunta, ["Sim", "Não"])
     elif pergunta == "Qual sua dieta?":
         return st.selectbox(pergunta, ["Vegetariana", "Pouca carne", "Consumo médio de carne", "Muita carne"])
     else:
@@ -112,7 +109,7 @@ if st.session_state.pagina < len(perguntas):
     if st.button("Próximo"):
         st.session_state.respostas[pergunta_atual] = resposta
         st.session_state.pagina += 1
-        st.rerun()
+        st.experimental_rerun()
 else:
     # Calcular pegada de carbono
     def calcular_pegada(respostas):
@@ -134,8 +131,8 @@ else:
         fator_produtos = respostas.get("Quantos produtos industrializados você consome por semana?", 0) * 50
         fator_refeicoes = respostas.get("Quantas refeições você consome fora de casa por semana?", 0) * 75
         fator_roupas = respostas.get("Quantas compras de roupas novas você faz por ano?", 0) * 100
-        fator_reciclagem = -500 if respostas.get("Você recicla lixo regularmente?", 0) > 0 else 0
-        fator_compostagem = -300 if respostas.get("Você faz compostagem de restos orgânicos?", 0) > 0 else 0
+        fator_reciclagem = -500 if respostas.get("Você recicla lixo regularmente?", "Não") == "Sim" else 0
+        fator_compostagem = -300 if respostas.get("Você faz compostagem de restos orgânicos?", "Não") == "Sim" else 0
         
         fator_dieta = {"Vegetariana": 1500, "Pouca carne": 2500, "Consumo médio de carne": 3500, "Muita carne": 4500}
         

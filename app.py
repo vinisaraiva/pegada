@@ -142,7 +142,7 @@ else:
     
     pegada = calcular_pegada(st.session_state.respostas)
     media_global = 4800  # Média global de emissão per capita
-    restauracao_por_arvore = 22  # Cada árvore absorve 22kg de CO2/ano
+    restauracao_por_arvore = 25  # Cada árvore absorve 22kg de CO2/ano
     arvores_necessarias = pegada / restauracao_por_arvore
     
     st.subheader("📊 Resultado da sua Pegada de Carbono")
@@ -153,6 +153,11 @@ else:
         st.metric(label="Média Global", value=f"{media_global:.2f} kg CO2")
     
     st.write(f"🌳 Para equilibrar sua emissão, seria necessário restaurar **{arvores_necessarias:.0f} árvores**!")
+    st.write(f"Isso equivale aproximadamente a:")
+    st.write(f"🌱 **{arvores_necessarias / 4:.0f} mudas de Pau-Brasil**")
+    st.write(f"🌿 **{arvores_necessarias / 4:.0f} mudas de Ipê-Amarelo**")
+    st.write(f"🌳 **{arvores_necessarias / 4:.0f} mudas de Ingá**")
+    st.write(f"🌲 **{arvores_necessarias / 4:.0f} mudas de Jacarandá**")
     
     # Gráfico comparativo
     fig, ax = plt.subplots()

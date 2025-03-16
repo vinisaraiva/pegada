@@ -101,7 +101,7 @@ if st.session_state.pagina < len(perguntas):
     if st.button("Próximo"):
         respostas[perguntas[st.session_state.pagina]] = resposta
         st.session_state.pagina += 1
-        st.experimental_rerun()
+        st.rerun()
 else:
     # Calcular pegada de carbono
     def calcular_pegada(respostas):

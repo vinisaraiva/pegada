@@ -185,4 +185,86 @@ with tab1:
         st.write("🌿 Pequenas mudanças no dia a dia ajudam a preservar o planeta!")
 
 with tab2:
-    st.write("Descubra sua pegada hidrálica e veja como reduzir seu impacto ambiental!")
+    st.write("Descubra seu consumo de água e veja como reduzir seu impacto hídrico!")
+
+    # Inicializar session_state para armazenar respostas
+    if 'respostas' not in st.session_state:
+        st.session_state.respostas = {}
+    if 'pagina' not in st.session_state:
+        st.session_state.pagina = 0
+
+    # Perguntas ao usuário (passo a passo)
+    st.sidebar.header("📋 Questionário")
+    perguntas = [
+        "Quantos litros de água você consome por dia?",
+        "Quantos banhos você toma por dia?",
+        "Qual a duração média do seu banho (em minutos)?",
+        "Você usa máquina de lavar roupas? (Sim ou Não)",
+        "Quantas vezes por semana você usa a máquina de lavar roupas?",
+        "Você lava louça manualmente ou com máquina de lavar louças?",
+        "Quantas vezes por dia você lava louça?",
+        "Você consome carne regularmente? (Sim ou Não)",
+        "Quantas porções de carne você consome por semana?",
+        "Quantas xícaras de café você bebe por dia?",
+        "Você consome produtos industrializados frequentemente? (Sim ou Não)"
+    ]
+
+    def obter_resposta(pergunta):
+        if pergunta in ["Você usa máquina de lavar roupas? (Sim ou Não)", "Você consome carne regularmente? (Sim ou Não)", "Você consome produtos industrializados frequentemente? (Sim ou Não)"]:
+            return st.selectbox(pergunta, ["Sim", "Não"])
+        else:
+            return st.number_input(pergunta, min_value=0, step=1)
+
+    # Exibir perguntas passo a passo
+    if st.session_state.pagina < len(perguntas):
+        pergunta_atual = perguntas[st.session_state.pagina]
+        resposta = obter_resposta(pergunta_atual)
+        
+        if st.button("Próximo"):
+            st.session_state.respostas[pergunta_atual] = resposta
+            st.session_state.pagina += 1
+            st.rerun()
+    else:
+        # Calcular pegada hídrica
+        def calcular_pegada_hidrica(respostas):
+            fator_banho = 8 * respostas.get("Qual a duração média do seu banho (em minutos)?", 0) * respostas.get("Quantos banhos você toma por dia?", 0) * 365  # Média reduzida considerando uso frequente de chuveiros elétricos econômicos na região  # Banho médio na Bahia consome menos água devido ao uso de chuveiros elétricos econômicos
+            fator_lavar_roupas = 100 * respostas.get("Quantas vezes por semana você usa a máquina de lavar roupas?", 0) * 52  # Redução devido ao uso de tanques e lavagem manual comum na região  # Média reduzida por lavagem a frio e uso de tanques if respostas.get("Você usa máquina de lavar roupas? (Sim ou Não)") == "Sim" else 0
+            fator_lavar_louca = 12 * respostas.get("Quantas vezes por dia você lava louça?", 0) * 365  # Uso frequente de bacias e reutilização de água  # Uso de bacias e reutilização de água para enxágue
+            fator_carne = 15400 * respostas.get("Quantas porções de carne você consome por semana?", 0) * 52 if respostas.get("Você consome carne regularmente? (Sim ou Não)") == "Sim" else 0
+            fator_cafe = 90 * respostas.get("Quantas xícaras de café você bebe por dia?", 0) * 365  # Consumo menor devido à preferência por outras bebidas como sucos tropicais  # Consumo local de café pode ser ligeiramente menor
+            fator_produtos = 5000 if respostas.get("Você consome produtos industrializados frequentemente? (Sim ou Não)") == "Sim" else 0
+            
+            pegada_total = (fator_banho + fator_lavar_roupas + fator_lavar_louca + fator_carne + fator_cafe + fator_produtos)
+            return pegada_total
+        
+        pegada = calcular_pegada_hidrica(st.session_state.respostas)
+        media_global = 950000  # Média regional estimada para a Bahia/Sul da Bahia (litros/ano)  # Média global de pegada hídrica per capita (litros/ano)  # Média regional estimada para a Bahia (litros/ano)  # Média global de pegada hídrica (litros/ano)
+        
+        st.subheader("📊 Resultado da sua Pegada Hídrica")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric(label="Sua Pegada Hídrica", value=f"{pegada:.0f} litros/ano")
+        with col2:
+            st.metric(label="Média Global", value=f"{media_global:.0f} litros/ano")
+        
+        # Gráfico comparativo
+        fig, ax = plt.subplots()
+        categorias = ['Sua Pegada', 'Média Global']
+        valores = [pegada, media_global]
+        ax.bar(categorias, valores, color=['blue', 'gray'])
+        ax.set_ylabel("Litros de água por ano")
+        ax.set_title("Comparação com a Média Global")
+        st.pyplot(fig)
+        
+        # Sugestões para redução
+        st.subheader("💡 Dicas para Reduzir Sua Pegada Hídrica")
+        if respostas.get("Qual a duração média do seu banho (em minutos)?", 0) > 10:
+            st.write("🚿 **Reduza o tempo do banho para economizar água.")
+        if respostas.get("Quantas vezes por semana você usa a máquina de lavar roupas?", 0) > 3:
+            st.write("👕 **Lave roupas com carga completa para reduzir o consumo de água.")
+        if respostas.get("Você consome carne regularmente? (Sim ou Não)") == "Sim":
+            st.write("🥩 **Diminuir o consumo de carne pode reduzir sua pegada hídrica.")
+        if respostas.get("Quantas xícaras de café você bebe por dia?", 0) > 3:
+            st.write("☕ **Reduzir o consumo de café ajuda a economizar água indiretamente.")
+        
+        st.write("💙 Pequenas mudanças no dia a dia ajudam a preservar os recursos hídricos!")

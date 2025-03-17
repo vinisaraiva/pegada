@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
 # Configuração da página
 st.set_page_config(page_title="Calculadora de Pegada de Carbono", initial_sidebar_state="collapsed", layout="wide")
 
@@ -66,7 +67,7 @@ st.markdown(
 
 st.write("&nbsp;")
 st.subheader("Calculadora de Impacto Ambiental")
-st.image("banner.jpg", caption="", use_column_width="auto")
+st.image("banner.jpg", caption="")
 st.write("&nbsp;")
 tab1, tab2 = st.tabs([" 👣 PEGADA DE CARBONO    ", " 💧 PEGADA HIDRÍCA   "])
 with tab1:
@@ -185,8 +186,8 @@ with tab1:
         st.write("🌿 Pequenas mudanças no dia a dia ajudam a preservar o planeta!")
 
 with tab2:
-    st.write("Descubra seu consumo de água e veja como reduzir seu impacto hídrico!")
 
+    st.write("Descubra seu consumo de água e veja como reduzir seu impacto hídrico!")
     # Inicializar session_state para armazenar respostas
     if 'respostas' not in st.session_state:
         st.session_state.respostas = {}
@@ -210,61 +211,105 @@ with tab2:
     ]
 
     def obter_resposta(pergunta):
-        if pergunta in ["Você usa máquina de lavar roupas? (Sim ou Não)", "Você consome carne regularmente? (Sim ou Não)", "Você consome produtos industrializados frequentemente? (Sim ou Não)"]:
-            return st.selectbox(pergunta, ["Sim", "Não"])
+        if pergunta in ["Você usa máquina de lavar roupas? (Sim ou Não)", 
+                        "Você consome carne regularmente? (Sim ou Não)", 
+                        "Você consome produtos industrializados frequentemente? (Sim ou Não)"]:
+            return st.selectbox(pergunta, ["Sim", "Não"], key=pergunta)
+        
+        elif pergunta == "Você lava louça manualmente ou com máquina de lavar louças?":
+            return st.selectbox(pergunta, ["Manualmente", "Com Lava-louças"], key=pergunta)
+        
         else:
-            return st.number_input(pergunta, min_value=0, step=1)
+            return st.number_input(pergunta, min_value=0, step=1, key=pergunta)
 
     # Exibir perguntas passo a passo
     if st.session_state.pagina < len(perguntas):
         pergunta_atual = perguntas[st.session_state.pagina]
         resposta = obter_resposta(pergunta_atual)
         
-        if st.button("Próximo"):
+        if st.button("Próximo", key=f"proximo_{st.session_state.pagina}"):
             st.session_state.respostas[pergunta_atual] = resposta
             st.session_state.pagina += 1
             st.rerun()
     else:
-        # Calcular pegada hídrica
+        # Calcular pegada hídrica original
         def calcular_pegada_hidrica(respostas):
-            fator_banho = 8 * respostas.get("Qual a duração média do seu banho (em minutos)?", 0) * respostas.get("Quantos banhos você toma por dia?", 0) * 365  # Média reduzida considerando uso frequente de chuveiros elétricos econômicos na região  # Banho médio na Bahia consome menos água devido ao uso de chuveiros elétricos econômicos
-            fator_lavar_roupas = 100 * respostas.get("Quantas vezes por semana você usa a máquina de lavar roupas?", 0) * 52  # Redução devido ao uso de tanques e lavagem manual comum na região  # Média reduzida por lavagem a frio e uso de tanques if respostas.get("Você usa máquina de lavar roupas? (Sim ou Não)") == "Sim" else 0
-            fator_lavar_louca = 12 * respostas.get("Quantas vezes por dia você lava louça?", 0) * 365  # Uso frequente de bacias e reutilização de água  # Uso de bacias e reutilização de água para enxágue
+            fator_banho = 8 * respostas.get("Qual a duração média do seu banho (em minutos)?", 0) * respostas.get("Quantos banhos você toma por dia?", 0) * 365  
+            fator_lavar_roupas = 100 * respostas.get("Quantas vezes por semana você usa a máquina de lavar roupas?", 0) * 52 if respostas.get("Você usa máquina de lavar roupas? (Sim ou Não)") == "Sim" else 0
+            
+            if respostas.get("Você lava louça manualmente ou com máquina de lavar louças?") == "Manualmente":
+                fator_lavar_louca = 12 * respostas.get("Quantas vezes por dia você lava louça?", 0) * 365  
+            else:  # Com Lava-louças
+                fator_lavar_louca = 9 * respostas.get("Quantas vezes por dia você lava louça?", 0) * 365  # Lava-louças consome menos água
+            
             fator_carne = 15400 * respostas.get("Quantas porções de carne você consome por semana?", 0) * 52 if respostas.get("Você consome carne regularmente? (Sim ou Não)") == "Sim" else 0
-            fator_cafe = 90 * respostas.get("Quantas xícaras de café você bebe por dia?", 0) * 365  # Consumo menor devido à preferência por outras bebidas como sucos tropicais  # Consumo local de café pode ser ligeiramente menor
+            fator_cafe = 90 * respostas.get("Quantas xícaras de café você bebe por dia?", 0) * 365  
             fator_produtos = 5000 if respostas.get("Você consome produtos industrializados frequentemente? (Sim ou Não)") == "Sim" else 0
             
             pegada_total = (fator_banho + fator_lavar_roupas + fator_lavar_louca + fator_carne + fator_cafe + fator_produtos)
             return pegada_total
         
-        pegada = calcular_pegada_hidrica(st.session_state.respostas)
-        media_global = 950000  # Média regional estimada para a Bahia/Sul da Bahia (litros/ano)  # Média global de pegada hídrica per capita (litros/ano)  # Média regional estimada para a Bahia (litros/ano)  # Média global de pegada hídrica (litros/ano)
-        
-        st.subheader("📊 Resultado da sua Pegada Hídrica")
-        col1, col2 = st.columns(2)
+        pegada_original = calcular_pegada_hidrica(st.session_state.respostas)
+        media_global = 1240000  # Média global por pessoa
+        media_bahia = 950000  # Média ajustada para a Bahia
+
+        # Comparação das Pegadas Hídricas - Exibindo primeiro os valores
+        st.subheader("📊 Comparação da Pegada Hídrica")
+        col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric(label="Sua Pegada Hídrica", value=f"{pegada:.0f} litros/ano")
+            st.markdown("<h4 style='color: green; font-size: 16px;'>Sua Pegada Atual</h4>", unsafe_allow_html=True)
+            st.caption(f"🌍 {pegada_original:.0f} litros/ano")
         with col2:
-            st.metric(label="Média Global", value=f"{media_global:.0f} litros/ano")
-        
-        # Gráfico comparativo
+            #st.header("Média Global")
+            st.markdown("<h4 style='color: green; font-size: 16px;'>Média Global</h4>", unsafe_allow_html=True)
+            st.caption(f"🌎 {media_global:.0f} litros/ano")
+        with col3:
+            #st.header("Média na Bahia")
+            st.markdown("<h4 style='color: green; font-size: 16px;'>Média na Bahia</h4>", unsafe_allow_html=True)
+            st.caption(f"🏝️ {media_bahia:.0f} litros/ano")
+
+        # Exibição do Gráfico Comparativo - Agora com 3 barras
+        st.subheader("📉 Impacto das Mudanças no Consumo de Água")
         fig, ax = plt.subplots()
-        categorias = ['Sua Pegada', 'Média Global']
-        valores = [pegada, media_global]
-        ax.bar(categorias, valores, color=['blue', 'gray'])
+        categorias = ['Pegada Atual', 'Média Global', 'Após Reduções']
+        valores = [pegada_original, media_global, pegada_original]  # Inicialmente igual, será atualizado após simulação
+        barras = ax.bar(categorias, valores, color=['blue', 'gray', 'green'])
         ax.set_ylabel("Litros de água por ano")
-        ax.set_title("Comparação com a Média Global")
+        ax.set_title("Comparação da Pegada Hídrica")
         st.pyplot(fig)
-        
-        # Sugestões para redução
+
+        # Simulação de economia de água - Agora abaixo do gráfico
+        st.subheader("💧 Simulação: Como Reduzir sua Pegada Hídrica?")
+        reduzir_banho = st.checkbox("Reduzir tempo de banho (de 10 para 5 min)")
+        reduzir_lavagem_roupa = st.checkbox("Lavar roupas com menos frequência")
+        reduzir_carne = st.checkbox("Diminuir consumo de carne")
+        reduzir_cafe = st.checkbox("Beber menos café")
+
+        # Aplicando reduções no cálculo
+        pegada_otimizada = pegada_original
+        if reduzir_banho:
+            pegada_otimizada -= 8 * 5 * st.session_state.respostas.get("Quantos banhos você toma por dia?", 0) * 365  
+        if reduzir_lavagem_roupa:
+            pegada_otimizada -= 5000  
+        if reduzir_carne:
+            pegada_otimizada -= 15400 * 2 * 52  
+        if reduzir_cafe:
+            pegada_otimizada -= 90 * 2 * 365  
+
+        # Atualizar gráfico após simulação
+        valores[2] = pegada_otimizada  # Atualizando o valor de "Após Reduções"
+        barras[2].set_height(pegada_otimizada)
+        st.pyplot(fig)
+
+        # Sugestões para redução personalizada
         st.subheader("💡 Dicas para Reduzir Sua Pegada Hídrica")
-        if respostas.get("Qual a duração média do seu banho (em minutos)?", 0) > 10:
-            st.write("🚿 **Reduza o tempo do banho para economizar água.")
-        if respostas.get("Quantas vezes por semana você usa a máquina de lavar roupas?", 0) > 3:
-            st.write("👕 **Lave roupas com carga completa para reduzir o consumo de água.")
-        if respostas.get("Você consome carne regularmente? (Sim ou Não)") == "Sim":
-            st.write("🥩 **Diminuir o consumo de carne pode reduzir sua pegada hídrica.")
-        if respostas.get("Quantas xícaras de café você bebe por dia?", 0) > 3:
-            st.write("☕ **Reduzir o consumo de café ajuda a economizar água indiretamente.")
-        
-        st.write("💙 Pequenas mudanças no dia a dia ajudam a preservar os recursos hídricos!")
+        if reduzir_banho:
+            st.write("🚿 **Parabéns! Reduzir o tempo de banho ajudará a economizar milhares de litros por ano.**")
+        if reduzir_lavagem_roupa:
+            st.write("👕 **Ótima escolha! Lavar roupas com menos frequência economiza muita água.**")
+        if reduzir_carne:
+            st.write("🥩 **Diminuir o consumo de carne ajuda a reduzir sua pegada hídrica indiretamente.**")
+        if reduzir_cafe:
+            st.write("☕ **Reduzir o consumo de café economiza água usada na produção.**")
+
+        st.write("💙 Pequenas mudanças fazem uma grande diferença para o planeta!")

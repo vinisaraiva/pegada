@@ -69,6 +69,7 @@ st.write("&nbsp;")
 st.subheader("Calculadora de Impacto Ambiental")
 st.image("banner.jpg", caption="")
 st.write("&nbsp;")
+
 # Criar tabs para as duas calculadoras
 tab1, tab2 = st.tabs([" 👣 PEGADA DE CARBONO    ", " 💧 PEGADA HÍDRICA   "])
 
@@ -168,5 +169,36 @@ with tab2:
             st.session_state.pagina_hidrica += 1
             st.rerun()
     else:
-        st.subheader("📊 Resultado da sua Pegada Hídrica")
-        st.write(f"💧 Sua pegada hídrica: **{sum(st.session_state.respostas_hidrica.values())} litros/ano**")
+        # Resultados e Comparação
+        pegada_original = sum(st.session_state.respostas_hidrica.values())
+        media_global = 1240000  # Média global por pessoa
+        media_bahia = 950000  # Média ajustada para a Bahia
+
+        st.subheader("📊 Comparação da Pegada Hídrica")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.header("Sua Pegada Atual")
+            st.caption(f"🌍 {pegada_original:.0f} litros/ano")
+        with col2:
+            st.header("Média Global")
+            st.caption(f"🌎 {media_global:.0f} litros/ano")
+        with col3:
+            st.header("Média na Bahia")
+            st.caption(f"🏝️ {media_bahia:.0f} litros/ano")
+
+        # Simulação de economia de água
+        st.subheader("💧 Simulação: Como Reduzir sua Pegada Hídrica?")
+        reduzir_banho = st.checkbox("Reduzir tempo de banho (de 10 para 5 min)")
+        reduzir_lavagem_roupa = st.checkbox("Lavar roupas com menos frequência")
+
+        pegada_otimizada = pegada_original
+        if reduzir_banho:
+            pegada_otimizada -= 5000
+        if reduzir_lavagem_roupa:
+            pegada_otimizada -= 5000
+
+        # Gráfico atualizado
+        st.subheader("📉 Impacto das Mudanças no Consumo de Água")
+        fig, ax = plt.subplots()
+        ax.bar(["Pegada Atual", "Média Global", "Após Reduções"], [pegada_original, media_global, pegada_otimizada], color=['blue', 'gray', 'green'])
+        st.pyplot(fig)

@@ -164,16 +164,7 @@ with tab1:
         st.write(f"🌿 **{arvores_necessarias / 4:.0f} mudas de Ipê-Amarelo**")
         st.write(f"🌳 **{arvores_necessarias / 4:.0f} mudas de Ingá**")
         st.write(f"🌲 **{arvores_necessarias / 4:.0f} mudas de Jacarandá**")
-        
-        # Gráfico comparativo
-        fig, ax = plt.subplots()
-        categorias = ['Sua Pegada', 'Média Global']
-        valores = [pegada, media_global]
-        ax.bar(categorias, valores, color=['green', 'red'])
-        ax.set_ylabel("kg CO2 por ano")
-        ax.set_title("Comparação com a Média Global")
-        st.pyplot(fig)
-        
+               
         # Sugestões para redução
         st.subheader("🌱 Dicas para Reduzir Sua Pegada")
         if st.session_state.respostas.get("Se usa transporte próprio, quantos km percorre por semana?", 0) > 50:

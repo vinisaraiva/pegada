@@ -97,89 +97,90 @@ if 'pagina_hidrica' not in st.session_state:
 with tab1:
     st.write("Descubra sua pegada de carbono e veja como reduzir seu impacto ambiental!")
 
-perguntas_carbono = [
-    "Você usa transporte próprio?",
-    "Se usa transporte próprio, qual tipo? (Carro, Moto)",
-    "Se usa transporte próprio, quantos km percorre por semana?",
-    "Você utiliza transporte coletivo?",
-    "Se usa transporte coletivo, quantos dias por semana?",
-    "Consumo mensal de energia (kWh)?",
-    "Qual sua dieta?",
-    "Quantos voos de longa distância por ano?",
-    "Quantos produtos industrializados você consome por semana?",
-    "Quantas refeições você consome fora de casa por semana?",
-    "Você recicla lixo regularmente?",
-    "Você faz compostagem de restos orgânicos?",
-    "Quantas compras de roupas novas você faz por ano?"
-]
+    perguntas_carbono = [
+        "Você usa transporte próprio?",
+        "Se usa transporte próprio, qual tipo? (Carro, Moto)",
+        "Se usa transporte próprio, quantos km percorre por semana?",
+        "Você utiliza transporte coletivo?",
+        "Se usa transporte coletivo, quantos dias por semana?",
+        "Consumo mensal de energia (kWh)?",
+        "Qual sua dieta?",
+        "Quantos voos de longa distância por ano?",
+        "Quantos produtos industrializados você consome por semana?",
+        "Quantas refeições você consome fora de casa por semana?",
+        "Você recicla lixo regularmente?",
+        "Você faz compostagem de restos orgânicos?",
+        "Quantas compras de roupas novas você faz por ano?"
+    ]
 
-def obter_resposta_carbono(pergunta):
-    if pergunta in ["Você usa transporte próprio?", "Você utiliza transporte coletivo?", "Você recicla lixo regularmente?", "Você faz compostagem de restos orgânicos?"]:
-        return st.selectbox(pergunta, ["Sim", "Não"], key=pergunta)
-    elif pergunta == "Se usa transporte próprio, qual tipo? (Carro, Moto)":
-        return st.selectbox(pergunta, ["Carro", "Moto"], key=pergunta)
-    elif pergunta == "Qual sua dieta?":
-        return st.selectbox(pergunta, ["Vegetariana", "Pouca carne", "Consumo médio de carne", "Muita carne"], key=pergunta)
+    def obter_resposta_carbono(pergunta):
+        if pergunta in ["Você usa transporte próprio?", "Você utiliza transporte coletivo?", "Você recicla lixo regularmente?", "Você faz compostagem de restos orgânicos?"]:
+            return st.selectbox(pergunta, ["Sim", "Não"], key=pergunta)
+        elif pergunta == "Se usa transporte próprio, qual tipo? (Carro, Moto)":
+            return st.selectbox(pergunta, ["Carro", "Moto"], key=pergunta)
+        elif pergunta == "Qual sua dieta?":
+            return st.selectbox(pergunta, ["Vegetariana", "Pouca carne", "Consumo médio de carne", "Muita carne"], key=pergunta)
+        else:
+            return st.number_input(pergunta, min_value=0, step=1, key=pergunta)
+
+    if st.session_state.pagina_carbono < len(perguntas_carbono):
+        pergunta_atual = perguntas_carbono[st.session_state.pagina_carbono]
+        resposta = obter_resposta_carbono(pergunta_atual)
+
+        if st.button("Próximo", key="proximo_carbono"):
+            st.session_state.respostas_carbono[pergunta_atual] = resposta
+            st.session_state.pagina_carbono += 1
+            st.rerun()
     else:
-        return st.number_input(pergunta, min_value=0, step=1, key=pergunta)
+        # All the carbon footprint calculation and display code should be here
+        # 🛠️ **Correção para evitar erro de soma**
+        pegada_total = sum(
+            float(v) for v in st.session_state.respostas_carbono.values()
+            if isinstance(v, (int, float)) or str(v).replace('.', '', 1).isdigit()
+        )
 
-if st.session_state.pagina_carbono < len(perguntas_carbono):
-    pergunta_atual = perguntas_carbono[st.session_state.pagina_carbono]
-    resposta = obter_resposta_carbono(pergunta_atual)
-
-    if st.button("Próximo", key="proximo_carbono"):
-        st.session_state.respostas_carbono[pergunta_atual] = resposta
-        st.session_state.pagina_carbono += 1
-        st.rerun()
-else:
-    # 🛠️ **Correção para evitar erro de soma**
-    pegada_total = sum(
-        float(v) for v in st.session_state.respostas_carbono.values()
-        if isinstance(v, (int, float)) or str(v).replace('.', '', 1).isdigit()
-    )
-
-    st.markdown("<h2 style='color: teal; font-size: 20px;'>📊 Comparação da Pegada de Carbono</h2>", 
-            unsafe_allow_html=True)
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("<h4 style='color: green; font-size: 18px;'>Sua Pegada de Carbono:</h4>", unsafe_allow_html=True)
-    with col2:
-        st.markdown(f"<p style='color: black; font-size: 22px; font-weight: bold;'>{pegada_total:.2f} kg CO2/ano</p>", unsafe_allow_html=True)
-
-    # 🔹 **Simulação da Pegada de Carbono**
-    st.markdown("<h2 style='color: teal; font-size: 23px;'>♻️ Simulação: Como Reduzir sua Pegada de Carbono?</h2>", 
-            unsafe_allow_html=True)
-    reduzir_transporte = st.checkbox("Reduzir uso de transporte próprio")
-    reduzir_energia = st.checkbox("Economizar energia elétrica")
-    reduzir_dieta = st.checkbox("Reduzir consumo de carne")
-    reduzir_industrializados = st.checkbox("Consumir menos produtos industrializados")
-
-    pegada_otimizada = pegada_total
-    st.markdown("<h2 style='color: teal; font-size: 23px;'>Impactos Esperados</h2>", 
-            unsafe_allow_html=True)  
-    if reduzir_transporte:
-        pegada_otimizada -= 500
-        st.write("🚗 **Optar por transporte público ou bicicleta pode reduzir sua pegada de carbono em até 500 kg CO2/ano.**")
-    if reduzir_energia:
-        pegada_otimizada -= 400
-        st.write("💡 **Reduzir o consumo de eletricidade pode diminuir em até 400 kg CO2/ano.**")
-    if reduzir_dieta:
-        pegada_otimizada -= 600
-        st.write("🥩 **Diminuir o consumo de carne reduz o impacto ambiental e economiza 600 kg CO2/ano.**")
-    if reduzir_industrializados:
-        pegada_otimizada -= 300
-        st.write("🏭 **Menos produtos industrializados significa menor pegada de carbono: economia de até 300 kg CO2/ano.**")
-
-    # 🔹 **Exibição do resultado após reduções**
-    col3, col4 = st.columns(2)
-    with col3:
-        st.markdown("<h4 style='color: teal; font-size: 23px;'>Após Reduções:</h4>", unsafe_allow_html=True)
-    with col4:
-        st.markdown(f"<p style='color: green; font-size: 20px; font-weight: bold;'>{pegada_otimizada:.2f} kg CO2/ano</p>", unsafe_allow_html=True)
-
+        st.markdown("<h2 style='color: teal; font-size: 20px;'>📊 Comparação da Pegada de Carbono</h2>", 
+                unsafe_allow_html=True)
         
-
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("<h4 style='color: green; font-size: 18px;'>Sua Pegada de Carbono:</h4>", unsafe_allow_html=True)
+        with col2:
+            st.markdown(f"<p style='color: black; font-size: 22px; font-weight: bold;'>{pegada_total:.2f} kg CO2/ano</p>", unsafe_allow_html=True)
+    
+        # 🔹 **Simulação da Pegada de Carbono**
+        st.markdown("<h2 style='color: teal; font-size: 23px;'>♻️ Simulação: Como Reduzir sua Pegada de Carbono?</h2>", 
+                unsafe_allow_html=True)
+        reduzir_transporte = st.checkbox("Reduzir uso de transporte próprio")
+        reduzir_energia = st.checkbox("Economizar energia elétrica")
+        reduzir_dieta = st.checkbox("Reduzir consumo de carne")
+        reduzir_industrializados = st.checkbox("Consumir menos produtos industrializados")
+    
+        pegada_otimizada = pegada_total
+        st.markdown("<h2 style='color: teal; font-size: 23px;'>Impactos Esperados</h2>", 
+                unsafe_allow_html=True)  
+        if reduzir_transporte:
+            pegada_otimizada -= 500
+            st.write("🚗 **Optar por transporte público ou bicicleta pode reduzir sua pegada de carbono em até 500 kg CO2/ano.**")
+        if reduzir_energia:
+            pegada_otimizada -= 400
+            st.write("💡 **Reduzir o consumo de eletricidade pode diminuir em até 400 kg CO2/ano.**")
+        if reduzir_dieta:
+            pegada_otimizada -= 600
+            st.write("🥩 **Diminuir o consumo de carne reduz o impacto ambiental e economiza 600 kg CO2/ano.**")
+        if reduzir_industrializados:
+            pegada_otimizada -= 300
+            st.write("🏭 **Menos produtos industrializados significa menor pegada de carbono: economia de até 300 kg CO2/ano.**")
+    
+        # 🔹 **Exibição do resultado após reduções**
+        col3, col4 = st.columns(2)
+        with col3:
+            st.markdown("<h4 style='color: teal; font-size: 23px;'>Após Reduções:</h4>", unsafe_allow_html=True)
+        with col4:
+            st.markdown(f"<p style='color: green; font-size: 20px; font-weight: bold;'>{pegada_otimizada:.2f} kg CO2/ano</p>", unsafe_allow_html=True)
+    
+        
+    
 # Inicializar session_state para armazenar respostas e páginas de cada aba
 if 'respostas_hidrica' not in st.session_state:
     st.session_state.respostas_hidrica = {}

@@ -186,16 +186,22 @@ with tab2:
             st.header("Média na Bahia")
             st.caption(f"🏝️ {media_bahia:.0f} litros/ano")
 
-        # Simulação de economia de água
+        # Simulação de economia de água - Agora com todas as opções restauradas
         st.subheader("💧 Simulação: Como Reduzir sua Pegada Hídrica?")
         reduzir_banho = st.checkbox("Reduzir tempo de banho (de 10 para 5 min)")
         reduzir_lavagem_roupa = st.checkbox("Lavar roupas com menos frequência")
+        reduzir_carne = st.checkbox("Diminuir consumo de carne")
+        reduzir_cafe = st.checkbox("Beber menos café")
 
         pegada_otimizada = pegada_original
         if reduzir_banho:
             pegada_otimizada -= 5000
         if reduzir_lavagem_roupa:
             pegada_otimizada -= 5000
+        if reduzir_carne:
+            pegada_otimizada -= 15400 * 2 * 52
+        if reduzir_cafe:
+            pegada_otimizada -= 90 * 2 * 365
 
         # Gráfico atualizado
         st.subheader("📉 Impacto das Mudanças no Consumo de Água")
